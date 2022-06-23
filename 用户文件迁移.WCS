@@ -1,0 +1,196 @@
+﻿CALL $--ret:&DPIA user32.dll,SetProcessDPIAware //设置dpi感知模式
+CALL $--ret:&hdc user32.dll,GetDC,#0  //获取显示器0（一般是主显示器）的句柄
+CALL $--ret:&LOGPIXELSX Gdi32.dll,GetDeviceCaps,#%hdc%,#88     //获取显示器横向DPI，LOGPIXELSX为#88，纵向LOGPIXELSY为#90,两个值是一样的。
+SET &::WM_MOUSEHOVER=0x02A1
+SET &::WM_MOUSELEAVE=0x02A3
+
+CALL variable
+
+_SUB variable
+REGI --init $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\{4C5C32FF-BB9D-43B0-B5B4-2D72E54EAAA4},Game
+REGI --init $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\{56784854-C6CB-462B-8169-88E350ACB882},Contacts
+REGI --init $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\{BFB9D5E0-C6A9-404C-B2B2-AE6DB6AF4968},Links
+REGI --init $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\My Video,Videos
+REGI --init $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\Favorites,Favorites
+REGI --init $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\{7D1D3A04-DEBB-4115-95CF-2F29DA2920DA},Searches
+REGI --init $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\My Pictures,Pictures
+REGI --init $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\Personal,Documents
+REGI --init $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\{374DE290-123F-4565-9164-39C4925E467B},Downloads
+REGI --init $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\My Music,Music
+REGI --init $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\Desktop,Desktop
+_END
+
+_SUB assignment
+    ENVI @EDIT2=%Game%
+    ENVI @EDIT3=%Contacts%
+    ENVI @EDIT4=%Links%
+    ENVI @EDIT5=%Videos%
+    ENVI @EDIT6=%Favorites%
+    ENVI @EDIT7=%Searches%
+    ENVI @EDIT8=%Pictures%
+    ENVI @EDIT9=%Documents%
+    ENVI @EDIT10=%Downloads%
+    ENVI @EDIT11=%Music%
+    ENVI @EDIT12=%Desktop%
+_END
+
+CALL @userFinder
+
+_SUB SetPath
+    BROW MntDir1,*%Path1%, 请选择目标目录
+    FIND $%Mntdir1%=,!ENVI @Path1=%Mntdir1%
+_END
+
+_SUB userFinder,W300H450,用户文件迁移,,,,,-scale:%&LOGPIXELSX%
+    ENVI @userFinder.Font=12:宋体
+    CHEK Check1,L20T20W80H20,3D对象,,-2
+    EDIT EDIT1,L20T43W100H20,,,,,10:宋体
+    ENVI @EDIT1.ReadOnly=1
+    CHEK Check2,L180T20W120H20,保存的游戏
+    EDIT EDIT2,L180T43W100H20,,,,,10:宋体
+    ENVI @EDIT2.ReadOnly=1
+    CHEK Check3,L20T66W80H20,联系人
+    EDIT EDIT3,L20T89W100H20,,,,,10:宋体
+    ENVI @EDIT3.ReadOnly=1
+    CHEk Check4,L180T66W60H20,链接
+    EDIT EDIT4,L180T89W100H20,,,,,10:宋体
+    ENVI @EDIT4.ReadOnly=1
+    CHEK Check5,L20T112W60H20,视频
+    EDIT EDIT5,L20T135W100H20,,,,,10:宋体
+    ENVI @EDIT5.ReadOnly=1
+    CHEK Check6,L180T112W80H20,收藏夹
+    EDIT EDIT6,L180T135W100H20,,,,,10:宋体
+    ENVI @EDIT6.ReadOnly=1
+    CHEK Check7,L20T158W60H20,搜索
+    EDIT EDIT7,L20T181W100H20,,,,,10:宋体
+    ENVI @EDIT7.ReadOnly=1
+    CHEK Check8,L180T158W60H20,图片
+    EDIT EDIT8,L180T181W100H20,,,,,10:宋体
+    ENVI @EDIT8.ReadOnly=1
+    CHEK Check9,L20T204W60H20,文档
+    EDIT EDIT9,L20T227W100H20,,,,,10:宋体
+    ENVI @EDIT9.ReadOnly=1
+    CHEK Check10,L180T204W60H20,下载
+    EDIT EDIT10,L180T227W100H20,,,,,10:宋体
+    ENVI @EDIT10.ReadOnly=1
+    CHEK Check11,L20T250W60H20,音乐
+    EDIT EDIT11,L20T273W100H20,,,,,10:宋体
+    ENVI @EDIT11.ReadOnly=1
+    CHEK Check12,L180T250W60H20,桌面
+    EDIT EDIT12,L180T273W100H20,,,,,10:宋体
+    ENVI @EDIT12.ReadOnly=1
+    EDIT Path1,L20T300W260H25,,,0x100,,10:宋体
+    ENVI @Path1.MSG=0x0203:CALL SetPath
+    CHEK move,L20T325W90H20,转移文件
+    CHEK ch,L190T325W120H20,全选\反选,CALL choose
+    CHEK zx,L120T325W50H20,注销
+    ITEM Start,L100T365W100H50,开始迁移,CALL Start
+    ITEM refresh,L20T365W50H30,刷新,TEAM CALL variable|CALL assignment
+    CALL assignment
+    ENVI @Path1.MSG=%&WM_MOUSEHOVER%: CALL Mouse_In_TIPS SEL01 "鼠标双击选择目录"
+    ENVI @Path1.MSG=%&WM_MOUSELEAVE%: TIPS -
+_END
+
+_SUB Mouse_In_TIPS			//气泡显示指定的信息
+    TEAM TIPS -| ENVI &ShowHot=
+    ENVI @%1.POS=?@&CurX:&CurY:@&CurW:&CurH
+    ENVI @@Cur=?&CurXM;&CurYM
+    CALC #&RelX=%&CurX%+%&CurW%
+    CALC #&RelY=%&CurY%+%&CurH%
+    ENVI &ShowHot=%~2
+    TEAM ENVI @@Cur=?&hotL;&hotT| TIPS ,%&ShowHot%,1000000000,1,@AL%&hotL%T%&hotT%
+_END
+
+_SUB execute
+    //MESS. %Check%num%.Check%
+    FIND $%Check%num%.Check%=1,
+    {IFEX |%num%=2,
+    {REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\{4C5C32FF-BB9D-43B0-B5B4-2D72E54EAAA4}=%Path1%\Saved Games
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\{4C5C32FF-BB9D-43B0-B5B4-2D72E54EAAA4}=%Path1%\Saved Games
+    FIND $%move.Check%=1,FILE "%Game%"->"%Path1%"
+    }
+    IFEX |%num%=3,
+    {REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\{56784854-C6CB-462B-8169-88E350ACB882}=%Path1%\Contacts
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\{56784854-C6CB-462B-8169-88E350ACB882}=%Path1%\Contacts
+    FIND $%move.Check%=1,FILE "%Contacts%"->"%Path1%"
+    }
+    IFEX |%num%=4,
+    {REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\{BFB9D5E0-C6A9-404C-B2B2-AE6DB6AF4968}=%Path1%\Links
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\{BFB9D5E0-C6A9-404C-B2B2-AE6DB6AF4968}=%Path1%\Links
+    FIND $%move.Check%=1,FILE "%Links%"->"%Path1%"
+    }
+    IFEX |%num%=5,
+    {REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\My Video=%Path1%\Videos
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\My Video=%Path1%\Videos
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\{35286A68-3C57-41A1-BBB1-0EAE73D76C95}=%Path1%\Videos
+    FIND $%move.Check%=1,FILE "%Videos%"->"%Path1%"
+    }
+    IFEX |%num%=6,
+    {REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\Favorites=%Path1%\Favorites
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\Favorites=%Path1%\Favorites
+    FIND $%move.Check%=1,FILE "%Favorites%"->"%Path1%"
+    }
+    IFEX |%num%=7,
+    {REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\{7D1D3A04-DEBB-4115-95CF-2F29DA2920DA}=%Path1%\Searches
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\{7D1D3A04-DEBB-4115-95CF-2F29DA2920DA}=%Path1%\Searches
+    FIND $%move.Check%=1,FILE "%Searches%"->"%Path1%"
+    }
+    IFEX |%num%=8,
+    {REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\My Pictures=%Path1%\Pictures
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\My Pictures=%Path1%\Pictures
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\{0DDD015D-B06C-45D5-8C4C-F59713854639}=%Path1%\Pictures
+    FIND $%move.Check%=1,FILE "%Pictures%"->"%Path1%"
+    }
+    IFEX |%num%=9,
+    {REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\Personal=%Path1%\Documents
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\Personal=%Path1%\Documents
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\{F42EE2D3-909F-4907-8871-4C22FC0BF756}=%Path1%\Documents
+    FIND $%move.Check%=1,FILE "%Documents%"->"%Path1%"
+    }
+    IFEX |%num%=10,
+    {REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\{374DE290-123F-4565-9164-39C4925E467B}=%Path1%\Downloads
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\{374DE290-123F-4565-9164-39C4925E467B}=%Path1%\Downloads
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\{7D83EE9B-2244-4E70-B1F5-5393042AF1E4}=%Path1%\Downloads
+    FIND $%move.Check%=1,FILE "%Downloads%"->"%Path1%"
+    }
+    IFEX |%num%=11,
+    {REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\My Music=%Path1%\Music
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\My Music=%Path1%\Music
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\{A0C69A99-21C8-4671-8703-7934162FCF1D}=%Path1%\Music
+    FIND $%move.Check%=1,FILE "%Music%"->"%Path1%"
+    }
+    IFEX |%num%=12,
+    {REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\Desktop=%Path1%\Desktop
+    REGI ~HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders\\Desktop=%Path1%\Desktop
+    FIND $%move.Check%=1,FILE "%Desktop%"->"%Path1%"
+    }
+    }
+    
+    CALC num=%num%+1
+_END
+
+_SUB choose
+    ENVI num1=1
+    FIND $%ch.Check%=1,LOOP %num1%<=12,CALL true!LOOP %num1%<=12,CALL off
+_END
+
+_SUB true
+    ENVI @Check%num1%.Check=1
+    CALC num1=%num1%+1
+_END
+
+_SUB off
+    ENVI @Check%num1%.Check=0
+    CALC num1=%num1%+1
+_END
+
+_SUB Start
+    FIND $%Path1%=,MESS 请输入正确的路径!Thread* CALL CCC
+_END
+
+_SUB CCC
+    ENVI num=1
+    LOOP %num%<=12,CALL execute
+    MESS. 迁移完成
+    FIND $%zx.Check%=1,SHUT L
+_END
