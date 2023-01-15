@@ -32,6 +32,8 @@ _SUB assignment
     ENVI @EDIT12=%Desktop%
 _END
 
+
+
 _SUB SetPath
     BROW MntDir1,*%Path1%, 请选择目标目录
     FIND $%Mntdir1%=,!ENVI @Path1=%Mntdir1%
@@ -104,6 +106,10 @@ _END
 _SUB execute
         //^MESS. %*
         //MESS %move.Check%
+        FIND $%move.Check%=1,
+        {
+            IFEX !"%Path1%",PATH "%Path1%"
+        }
         IFEX |%~2=1,
         {
             REGI $HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders\\{4C5C32FF-BB9D-43B0-B5B4-2D72E54EAAA4}=%Path1%\Saved Games
