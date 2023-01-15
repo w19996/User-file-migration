@@ -108,7 +108,7 @@ _SUB execute
         //MESS %move.Check%
         FIND $%move.Check%=1,
         {
-            IFEX !"%Path1%",PATH "%Path1%"
+            FIND ! "%Path1%",PATH "%Path1%"
         }
         IFEX |%~2=1,
         {
